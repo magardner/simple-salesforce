@@ -1,15 +1,15 @@
 """ Classes for interacting with Salesforce Bulk API """
 
+import concurrent.futures
 import json
 from collections import OrderedDict
-from time import sleep
-import concurrent.futures
 from functools import partial
+from time import sleep
 
 import requests
 
-from .util import call_salesforce, list_from_generator
 from .exceptions import SalesforceGeneralError
+from .util import call_salesforce, list_from_generator
 
 
 class SFBulkHandler:
@@ -45,7 +45,7 @@ class SFBulkHandler:
             'Content-Type': 'application/json',
             'X-SFDC-Session': self.session_id,
             'X-PrettyPrint': '1'
-            }
+        }
 
     def __getattr__(self, name):
         return SFBulkType(object_name=name, bulk_url=self.bulk_url,
@@ -93,7 +93,7 @@ class SFBulkType:
             'object': self.object_name,
             'concurrencyMode': use_serial,
             'contentType': 'JSON'
-            }
+        }
 
         if operation == 'upsert':
             payload['externalIdFieldName'] = external_id_field
@@ -109,7 +109,7 @@ class SFBulkType:
         """ Close a bulk job """
         payload = {
             'state': 'Closed'
-            }
+        }
 
         url = "{}{}{}".format(self.bulk_url, 'job/', job_id)
 
@@ -182,7 +182,7 @@ class SFBulkType:
         batch_status = self._get_batch(job_id=batch['jobId'],
                                        batch_id=batch['id'])['state']
 
-        while batch_status not in ['Completed', 'Failed', 'Not Processed']:
+        while batch_status not in ['Completed', 'Failed', 'NotProcessed']:
             sleep(wait)
             batch_status = self._get_batch(job_id=batch['jobId'],
                                            batch_id=batch['id'])['state']
@@ -246,7 +246,7 @@ class SFBulkType:
 
             while batch_status['state'] not in [
                 'Completed', 'Failed', 'Not Processed'
-                ]:
+            ]:
                 sleep(wait)
                 batch_status = self._get_batch(job_id=batch['jobId'],
                                                batch_id=batch['id'])
